@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация и авторизация</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 620px;
+      margin: 35px auto;
+      padding: 0 15px;
+      background: #f2f5f9;
+    }
+
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 18px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #00000012;
+    }
+
+    input, button, select {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 11px;
+      margin: 7px 0;
+      font-size: 15px;
+    }
+
+    button {
+      background: #245fa6;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #logoutButton { background: #a83232; }
+    #message { overflow-wrap: anywhere; font-weight: bold; }
+    .hint { color: #666; font-size: 13px; margin: 0 0 6px; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 12px; background: #e3ecf8; color: #245fa6;
+    }
+    .badge.admin { background: #fbe3e3; color: #a83232; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 6px; border-bottom: 1px solid #eee; }
+    td select { width: auto; margin: 0; padding: 4px; }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Управление пользователями</h1>
+  <p id="message" role="status" aria-live="polite"></p>
+
+  <section id="registerSection">
+    <h2>Регистрация</h2>
+    <form id="registerForm">
+      <input id="regName" placeholder="Имя" required minlength="2" maxlength="60">
+      <input id="regSurname" placeholder="Фамилия" required minlength="2" maxlength="60">
+      <input id="regEmail" type="email" placeholder="Email" required>
+      <input id="regPassword" type="password" placeholder="Пароль" required minlength="8" maxlength="72" autocomplete="new-password">
+      <p class="hint">Минимум 8 символов, обязательно буквы и цифры.</p>
+      <input id="regConfirm" type="password" placeholder="Подтверждение пароля" required autocomplete="new-password">
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+  </section>
+
+  <section id="loginSection">
+    <h2>Вход в систему</h2>
+    <form id="loginForm">
+      <input id="loginEmail" type="email" placeholder="Email" required autocomplete="username">
+      <input id="loginPassword" type="password" placeholder="Пароль" required autocomplete="current-password">
+      <button type="submit">Войти</button>
+    </form>
+  </section>
+
+  <div id="profileArea" hidden>
+    <section>
+      <h2>Личный кабинет <span id="roleBadge" class="badge"></span></h2>
+      <p id="profileInfo"></p>
+      <p id="loginInfo" class="hint"></p>
+      <p>Вы успешно вошли в систему. Эта страница доступна авторизованным пользователям.</p>
+      <button id="logoutButton" type="button">Выйти</button>
+    </section>
+
+    <section>
+      <h2>Редактирование профиля</h2>
+      <form id="profileForm">
+        <input id="profName" placeholder="Имя" required minlength="2" maxlength="60">
+        <input id="profSurname" placeholder="Фамилия" required minlength="2" maxlength="60">
+        <input id="profEmail" type="email" placeholder="Email" required>
+        <button type="submit">Сохранить профиль</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Смена пароля</h2>
+      <form id="passwordForm">
+        <input id="oldPassword" type="password" placeholder="Старый пароль" required autocomplete="current-password">
+        <input id="newPassword" type="password" placeholder="Новый пароль" required minlength="8" maxlength="72" autocomplete="new-password">
+        <input id="newConfirm" type="password" placeholder="Подтверждение нового пароля" required autocomplete="new-password">
+        <button type="submit">Изменить пароль</button>
+      </form>
+    </section>
+
+    <section id="adminSection" hidden>
+      <h2>Панель администратора</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Имя</th><th>Email</th><th>Последний вход</th><th>Роль</th></tr>
+        </thead>
+        <tbody id="usersTable"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const message = $("message");
+    let currentUser = null;
+
+    async function api(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: { "Content-Type": "application/json", ...options.headers }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Произошла ошибка");
+      return data;
+    }
+
+    function formatDate(value) {
+      if (!value) return "—";
+      return new Date(value.replace(" ", "T") + "Z").toLocaleString("ru-RU");
+    }
+
+    function showLoggedOut() {
+      currentUser = null;
+      $("registerSection").hidden = false;
+      $("loginSection").hidden = false;
+      $("profileArea").hidden = true;
+      $("adminSection").hidden = true;
+      $("profileInfo").textContent = "";
+    }
+
+    function showProfile(user) {
+      currentUser = user;
+      $("registerSection").hidden = true;
+      $("loginSection").hidden = true;
+      $("profileArea").hidden = false;
+
+      $("profileInfo").textContent =
+        `Имя: ${user.name} ${user.surname} | Email: ${user.email}`;
+      $("loginInfo").textContent =
+        `Зарегистрирован: ${formatDate(user.created_at)} · Последний вход: ${formatDate(user.last_login)}`;
+      $("roleBadge").textContent = user.role;
+      $("roleBadge").className = "badge" + (user.role === "admin" ? " admin" : "");
+
+      $("profName").value = user.name;
+      $("profSurname").value = user.surname;
+      $("profEmail").value = user.email;
+
+      $("adminSection").hidden = user.role !== "admin";
+      if (user.role === "admin") loadUsers();
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await api("/api/admin/users");
+        const tbody = $("usersTable");
+        tbody.replaceChildren();
+        users.forEach(u => {
+          const tr = document.createElement("tr");
+          [u.id, `${u.name} ${u.surname}`, u.email, formatDate(u.last_login)].forEach(v => {
+            const td = document.createElement("td");
+            td.textContent = v;
+            tr.appendChild(td);
+          });
+          const roleTd = document.createElement("td");
+          const select = document.createElement("select");
+          ["user", "admin"].forEach(r => select.add(new Option(r, r, false, r === u.role)));
+          select.disabled = u.id === currentUser.id;
+          select.addEventListener("change", async () => {
+            try {
+              const result = await api(`/api/admin/users/${u.id}/role`, {
+                method: "PUT",
+                body: JSON.stringify({ role: select.value })
+              });
+              message.textContent = result.message;
+            } catch (error) {
+              message.textContent = error.message;
+              select.value = u.role;
+            }
+          });
+          roleTd.appendChild(select);
+          tr.appendChild(roleTd);
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    }
+
+    // Проверка сложности пароля на клиенте (дублирует серверную)
+    function checkPassword(password, confirm) {
+      if (password.length < 8) return "Пароль должен содержать минимум 8 символов";
+      if (!/\p{L}/u.test(password) || !/\d/.test(password)) {
+        return "Пароль должен содержать хотя бы одну букву и одну цифру";
+      }
+      if (password !== confirm) return "Пароли не совпадают";
+      return null;
+    }
+
+    $("registerForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      message.textContent = "";
+
+      const data = {
+        name: $("regName").value,
+        surname: $("regSurname").value,
+        email: $("regEmail").value,
+        password: $("regPassword").value,
+        confirmPassword: $("regConfirm").value
+      };
+
+      const problem = checkPassword(data.password, data.confirmPassword);
+      if (problem) { message.textContent = problem; return; }
+
+      try {
+        const result = await api("/api/register", {
+          method: "POST",
+          body: JSON.stringify(data)
+        });
+        message.textContent = result.message +
+          (result.role === "admin" ? " (вы первый пользователь — назначена роль admin)" : "") +
+          ". Теперь войдите в систему.";
+        $("loginEmail").value = data.email;
+        $("loginPassword").value = "";
+        $("regPassword").value = "";
+        $("regConfirm").value = "";
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    $("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      message.textContent = "";
+
+      const data = {
+        email: $("loginEmail").value,
+        password: $("loginPassword").value
+      };
+
+      try {
+        const result = await api("/api/login", {
+          method: "POST",
+          body: JSON.stringify(data)
+        });
+        $("loginPassword").value = "";
+        showProfile(result.user);
+        message.textContent = result.message +
+          (result.previousLogin ? `. Предыдущий вход: ${formatDate(result.previousLogin)}` : "");
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    $("profileForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const result = await api("/api/me", {
+          method: "PUT",
+          body: JSON.stringify({
+            name: $("profName").value,
+            surname: $("profSurname").value,
+            email: $("profEmail").value
+          })
+        });
+        showProfile(result.user);
+        message.textContent = result.message;
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    $("passwordForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const newPassword = $("newPassword").value;
+      const confirmPassword = $("newConfirm").value;
+
+      const problem = checkPassword(newPassword, confirmPassword);
+      if (problem) { message.textContent = problem; return; }
+
+      try {
+        const result = await api("/api/me/password", {
+          method: "PUT",
+          body: JSON.stringify({
+            oldPassword: $("oldPassword").value,
+            newPassword,
+            confirmPassword
+          })
+        });
+        $("passwordForm").reset();
+        message.textContent = result.message;
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    $("logoutButton").addEventListener("click", async () => {
+      try {
+        const result = await api("/api/logout", {
+          method: "POST",
+          body: JSON.stringify({})
+        });
+        showLoggedOut();
+        message.textContent = result.message;
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    async function checkSession() {
+      try {
+        showProfile(await api("/api/me"));
+      } catch {
+        showLoggedOut();
+      }
+    }
+
+    checkSession();
+  </script>
+</body>
+</html>

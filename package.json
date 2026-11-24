@@ -1,0 +1,20 @@
+{
+  "name": "lab13-git-cicd",
+  "version": "1.0.0",
+  "description": "Web-приложение с регистрацией и авторизацией, автотестами и CI на GitHub Actions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-reporter=spec"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0"
+  }
+}
