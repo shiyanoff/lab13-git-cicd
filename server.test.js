@@ -35,7 +35,7 @@ function createClient() {
 }
 
 const admin = {
-  name: "Алия", surname: "Ахметова", email: "aliya@example.com",
+  name: "Тимур", surname: "Шиянов", email: "timmy.shiyanov@gmail.com",
   password: "Test12345", confirmPassword: "Test12345"
 };
 const user = {
@@ -105,7 +105,7 @@ test("вход, профиль и выход", async () => {
 
   const me = await request("GET", "/api/me");
   assert.equal(me.status, 200);
-  assert.equal(me.data.surname, "Ахметова");
+  assert.equal(me.data.surname, "Шиянов");
   assert.ok(me.data.last_login, "время последнего входа сохранено");
   assert.equal(me.data.password_hash, undefined, "хеш пароля не отдаётся клиенту");
 
@@ -163,13 +163,13 @@ test("пользователь может изменить свой профил
   await request("POST", "/api/login", { email: admin.email, password: admin.password });
 
   const updated = await request("PUT", "/api/me", {
-    name: "Алия", surname: "Касымова", email: admin.email
+    name: "Тима", surname: "Шиянов", email: admin.email
   });
   assert.equal(updated.status, 200);
-  assert.equal(updated.data.user.surname, "Касымова");
+  assert.equal(updated.data.user.name, "Тима");
 
   const taken = await request("PUT", "/api/me", {
-    name: "Алия", surname: "Касымова", email: user.email
+    name: "Тима", surname: "Шиянов", email: user.email
   });
   assert.equal(taken.status, 409, "чужой email занять нельзя");
 });

@@ -3,125 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Регистрация и авторизация</title>
+  <title>Управление пользователями</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 620px;
-      margin: 35px auto;
-      padding: 0 15px;
-      background: #f2f5f9;
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --ink: #1d1d1f;
+      --ink-2: #6e6e73;
+      --ink-3: #a1a1a6;
+      --line: #e8e8ed;
+      --field: #f5f5f7;
+      --danger: #d70015;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.5 Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: 880px; margin: 0 auto; padding: 56px 20px 72px; }
+
+    .eyebrow { margin: 0 0 10px; color: var(--ink-2); font-size: 15px; font-weight: 500; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 6vw, 52px);
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+    h1 .g { color: var(--ink-3); }
+
+    h2 { margin: 0 0 18px; font-size: 22px; letter-spacing: -0.02em; font-weight: 650; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; margin-top: 16px; }
+    .grid.first { margin-top: 36px; }
 
     section {
-      background: white;
-      padding: 20px;
-      margin-bottom: 18px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px #00000012;
+      background: var(--card);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      transition: opacity 240ms ease, transform 240ms var(--ease-out);
     }
+    @starting-style { section { opacity: 0; transform: translateY(8px); } }
 
-    input, button, select {
-      box-sizing: border-box;
+    form { display: grid; gap: 12px; }
+
+    label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+
+    input, select {
       width: 100%;
-      padding: 11px;
-      margin: 7px 0;
-      font-size: 15px;
+      padding: 13px 16px;
+      border: 1.5px solid transparent;
+      border-radius: 14px;
+      background: var(--field);
+      color: var(--ink);
+      font: inherit;
+      transition: border-color 160ms ease, background-color 160ms ease;
     }
+    input::placeholder { color: var(--ink-3); }
+    input:focus, select:focus { outline: none; border-color: var(--ink); background: #fff; }
+
+    .hint { margin: -4px 0 0; color: var(--ink-2); font-size: 13px; }
 
     button {
-      background: #245fa6;
-      color: white;
-      border: none;
-      border-radius: 5px;
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 22px;
+      background: var(--ink);
+      color: #fff;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
+      transition: transform 160ms var(--ease-out), background-color 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    form button { margin-top: 6px; }
+    button:active { transform: scale(0.97); }
+    #logoutButton { background: var(--field); color: var(--danger); padding: 10px 18px; }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover { background: #000; }
+      #logoutButton:hover { background: #ebebef; }
     }
 
-    #logoutButton { background: #a83232; }
-    #message { overflow-wrap: anywhere; font-weight: bold; }
-    .hint { color: #666; font-size: 13px; margin: 0 0 6px; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0 0;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: var(--card);
+      font-size: 15px;
+      overflow-wrap: anywhere;
+      transition: opacity 200ms ease, transform 200ms var(--ease-out);
+    }
+    .status::before {
+      content: "";
+      width: 8px; height: 8px; flex: none;
+      border-radius: 50%;
+      background: #34c759;
+    }
+    .status.error::before { background: var(--danger); }
+    .status:empty { display: none; }
+    .status.enter { opacity: 0; transform: translateY(-4px); }
+
+    .profile-head { display: flex; align-items: center; gap: 18px; }
+    .avatar {
+      flex: none;
+      width: 64px; height: 64px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .who { flex: 1; min-width: 0; }
+    .who h2 { margin: 0; font-size: 26px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .who p { margin: 2px 0 0; color: var(--ink-2); overflow-wrap: anywhere; }
+
     .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 10px;
-      font-size: 12px; background: #e3ecf8; color: #245fa6;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--field);
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0;
     }
-    .badge.admin { background: #fbe3e3; color: #a83232; }
+    .badge.admin { background: var(--ink); color: #fff; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { text-align: left; padding: 6px; border-bottom: 1px solid #eee; }
-    td select { width: auto; margin: 0; padding: 4px; }
+    .rows { margin: 20px 0 0; }
+    .row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 15px; }
+    .row:first-child { border-top: 0; }
+    .row dt { color: var(--ink-2); }
+    .row dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+    .note { margin: 8px 0 0; color: var(--ink-2); font-size: 14px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    th { text-align: left; padding: 0 12px 10px 0; color: var(--ink-2); font-size: 13px; font-weight: 500; }
+    td { padding: 14px 12px 14px 0; border-top: 1px solid var(--line); vertical-align: middle; }
+    tbody tr:first-child td { border-top-color: var(--line); }
+    td:first-child { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+    td.mail { overflow-wrap: anywhere; }
+    td select { width: auto; padding: 8px 12px; border-radius: 10px; font-size: 14px; }
+    td select:disabled { color: var(--ink-3); }
 
     [hidden] { display: none !important; }
+
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      @starting-style { section { transform: none; } }
+      .status.enter { transform: none; }
+    }
   </style>
 </head>
 <body>
-  <h1>Управление пользователями</h1>
-  <p id="message" role="status" aria-live="polite"></p>
+  <main class="page">
+    <p class="eyebrow">Лабораторная работа 9</p>
+    <h1>Управление пользователями.<br><span class="g">Регистрация, вход и роли.</span></h1>
+    <p id="message" class="status" role="status" aria-live="polite"></p>
 
-  <section id="registerSection">
-    <h2>Регистрация</h2>
-    <form id="registerForm">
-      <input id="regName" placeholder="Имя" required minlength="2" maxlength="60">
-      <input id="regSurname" placeholder="Фамилия" required minlength="2" maxlength="60">
-      <input id="regEmail" type="email" placeholder="Email" required>
-      <input id="regPassword" type="password" placeholder="Пароль" required minlength="8" maxlength="72" autocomplete="new-password">
-      <p class="hint">Минимум 8 символов, обязательно буквы и цифры.</p>
-      <input id="regConfirm" type="password" placeholder="Подтверждение пароля" required autocomplete="new-password">
-      <button type="submit">Зарегистрироваться</button>
-    </form>
-  </section>
+    <div id="authArea" class="grid first">
+      <section id="registerSection">
+        <h2>Регистрация</h2>
+        <form id="registerForm">
+          <label>Имя<input id="regName" placeholder="Тимур" required minlength="2" maxlength="60"></label>
+          <label>Фамилия<input id="regSurname" placeholder="Шиянов" required minlength="2" maxlength="60"></label>
+          <label>Email<input id="regEmail" type="email" placeholder="name@example.com" required></label>
+          <label>Пароль<input id="regPassword" type="password" placeholder="Минимум 8 символов" required minlength="8" maxlength="72" autocomplete="new-password"></label>
+          <p class="hint">Буквы и цифры, не короче 8 символов.</p>
+          <label>Подтверждение пароля<input id="regConfirm" type="password" placeholder="Повторите пароль" required autocomplete="new-password"></label>
+          <button type="submit">Зарегистрироваться</button>
+        </form>
+      </section>
 
-  <section id="loginSection">
-    <h2>Вход в систему</h2>
-    <form id="loginForm">
-      <input id="loginEmail" type="email" placeholder="Email" required autocomplete="username">
-      <input id="loginPassword" type="password" placeholder="Пароль" required autocomplete="current-password">
-      <button type="submit">Войти</button>
-    </form>
-  </section>
+      <section id="loginSection">
+        <h2>Вход</h2>
+        <form id="loginForm">
+          <label>Email<input id="loginEmail" type="email" placeholder="name@example.com" required autocomplete="username"></label>
+          <label>Пароль<input id="loginPassword" type="password" placeholder="Ваш пароль" required autocomplete="current-password"></label>
+          <button type="submit">Войти</button>
+        </form>
+      </section>
+    </div>
 
-  <div id="profileArea" hidden>
-    <section>
-      <h2>Личный кабинет <span id="roleBadge" class="badge"></span></h2>
-      <p id="profileInfo"></p>
-      <p id="loginInfo" class="hint"></p>
-      <p>Вы успешно вошли в систему. Эта страница доступна авторизованным пользователям.</p>
-      <button id="logoutButton" type="button">Выйти</button>
-    </section>
+    <div id="profileArea" hidden>
+      <section style="margin-top: 36px">
+        <div class="profile-head">
+          <div id="avatar" class="avatar"></div>
+          <div class="who">
+            <h2><span id="profileName"></span><span id="roleBadge" class="badge"></span></h2>
+            <p id="profileInfo"></p>
+          </div>
+          <button id="logoutButton" type="button">Выйти</button>
+        </div>
+        <dl class="rows">
+          <div class="row"><dt>Зарегистрирован</dt><dd id="createdInfo"></dd></div>
+          <div class="row"><dt>Последний вход</dt><dd id="loginInfo"></dd></div>
+        </dl>
+        <p class="note">Вы вошли в систему. Этот раздел доступен только авторизованным пользователям.</p>
+      </section>
 
-    <section>
-      <h2>Редактирование профиля</h2>
-      <form id="profileForm">
-        <input id="profName" placeholder="Имя" required minlength="2" maxlength="60">
-        <input id="profSurname" placeholder="Фамилия" required minlength="2" maxlength="60">
-        <input id="profEmail" type="email" placeholder="Email" required>
-        <button type="submit">Сохранить профиль</button>
-      </form>
-    </section>
+      <div class="grid">
+        <section>
+          <h2>Профиль</h2>
+          <form id="profileForm">
+            <label>Имя<input id="profName" required minlength="2" maxlength="60"></label>
+            <label>Фамилия<input id="profSurname" required minlength="2" maxlength="60"></label>
+            <label>Email<input id="profEmail" type="email" required></label>
+            <button type="submit">Сохранить профиль</button>
+          </form>
+        </section>
 
-    <section>
-      <h2>Смена пароля</h2>
-      <form id="passwordForm">
-        <input id="oldPassword" type="password" placeholder="Старый пароль" required autocomplete="current-password">
-        <input id="newPassword" type="password" placeholder="Новый пароль" required minlength="8" maxlength="72" autocomplete="new-password">
-        <input id="newConfirm" type="password" placeholder="Подтверждение нового пароля" required autocomplete="new-password">
-        <button type="submit">Изменить пароль</button>
-      </form>
-    </section>
+        <section>
+          <h2>Смена пароля</h2>
+          <form id="passwordForm">
+            <label>Старый пароль<input id="oldPassword" type="password" required autocomplete="current-password"></label>
+            <label>Новый пароль<input id="newPassword" type="password" required minlength="8" maxlength="72" autocomplete="new-password"></label>
+            <label>Подтверждение<input id="newConfirm" type="password" required autocomplete="new-password"></label>
+            <button type="submit">Изменить пароль</button>
+          </form>
+        </section>
+      </div>
 
-    <section id="adminSection" hidden>
-      <h2>Панель администратора</h2>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Имя</th><th>Email</th><th>Последний вход</th><th>Роль</th></tr>
-        </thead>
-        <tbody id="usersTable"></tbody>
-      </table>
-    </section>
-  </div>
+      <section id="adminSection" style="margin-top: 16px" hidden>
+        <h2>Панель администратора</h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Имя</th><th>Email</th><th>Последний вход</th><th>Роль</th></tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
 
   <script>
     const $ = id => document.getElementById(id);
     const message = $("message");
+
+    function say(text, isError = false) {
+      message.textContent = text;
+      message.classList.toggle("error", isError);
+      message.classList.add("enter");
+      requestAnimationFrame(() => requestAnimationFrame(() => message.classList.remove("enter")));
+    }
     let currentUser = null;
 
     async function api(url, options = {}) {
@@ -135,14 +279,13 @@
     }
 
     function formatDate(value) {
-      if (!value) return "—";
+      if (!value) return "ещё не входил";
       return new Date(value.replace(" ", "T") + "Z").toLocaleString("ru-RU");
     }
 
     function showLoggedOut() {
       currentUser = null;
-      $("registerSection").hidden = false;
-      $("loginSection").hidden = false;
+      $("authArea").hidden = false;
       $("profileArea").hidden = true;
       $("adminSection").hidden = true;
       $("profileInfo").textContent = "";
@@ -150,15 +293,15 @@
 
     function showProfile(user) {
       currentUser = user;
-      $("registerSection").hidden = true;
-      $("loginSection").hidden = true;
+      $("authArea").hidden = true;
       $("profileArea").hidden = false;
 
-      $("profileInfo").textContent =
-        `Имя: ${user.name} ${user.surname} | Email: ${user.email}`;
-      $("loginInfo").textContent =
-        `Зарегистрирован: ${formatDate(user.created_at)} · Последний вход: ${formatDate(user.last_login)}`;
-      $("roleBadge").textContent = user.role;
+      $("profileName").textContent = `${user.name} ${user.surname}`;
+      $("avatar").textContent = (user.name[0] + user.surname[0]).toUpperCase();
+      $("profileInfo").textContent = user.email;
+      $("createdInfo").textContent = formatDate(user.created_at);
+      $("loginInfo").textContent = formatDate(user.last_login);
+      $("roleBadge").textContent = user.role === "admin" ? "Администратор" : "Пользователь";
       $("roleBadge").className = "badge" + (user.role === "admin" ? " admin" : "");
 
       $("profName").value = user.name;
@@ -179,6 +322,7 @@
           [u.id, `${u.name} ${u.surname}`, u.email, formatDate(u.last_login)].forEach(v => {
             const td = document.createElement("td");
             td.textContent = v;
+            if (v === u.email) td.className = "mail";
             tr.appendChild(td);
           });
           const roleTd = document.createElement("td");
@@ -191,9 +335,9 @@
                 method: "PUT",
                 body: JSON.stringify({ role: select.value })
               });
-              message.textContent = result.message;
+              say(result.message);
             } catch (error) {
-              message.textContent = error.message;
+              say(error.message, true);
               select.value = u.role;
             }
           });
@@ -202,7 +346,7 @@
           tbody.appendChild(tr);
         });
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     }
 
@@ -218,7 +362,7 @@
 
     $("registerForm").addEventListener("submit", async event => {
       event.preventDefault();
-      message.textContent = "";
+      say("");
 
       const data = {
         name: $("regName").value,
@@ -229,28 +373,28 @@
       };
 
       const problem = checkPassword(data.password, data.confirmPassword);
-      if (problem) { message.textContent = problem; return; }
+      if (problem) { say(problem, true); return; }
 
       try {
         const result = await api("/api/register", {
           method: "POST",
           body: JSON.stringify(data)
         });
-        message.textContent = result.message +
-          (result.role === "admin" ? " (вы первый пользователь — назначена роль admin)" : "") +
-          ". Теперь войдите в систему.";
+        say(result.message +
+          (result.role === "admin" ? ", вы первый пользователь и получили роль admin" : "") +
+          ". Теперь войдите в систему.");
         $("loginEmail").value = data.email;
         $("loginPassword").value = "";
         $("regPassword").value = "";
         $("regConfirm").value = "";
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     });
 
     $("loginForm").addEventListener("submit", async event => {
       event.preventDefault();
-      message.textContent = "";
+      say("");
 
       const data = {
         email: $("loginEmail").value,
@@ -264,10 +408,10 @@
         });
         $("loginPassword").value = "";
         showProfile(result.user);
-        message.textContent = result.message +
-          (result.previousLogin ? `. Предыдущий вход: ${formatDate(result.previousLogin)}` : "");
+        say(result.message +
+          (result.previousLogin ? `. Предыдущий вход: ${formatDate(result.previousLogin)}` : ""));
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     });
 
@@ -283,9 +427,9 @@
           })
         });
         showProfile(result.user);
-        message.textContent = result.message;
+        say(result.message);
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     });
 
@@ -295,7 +439,7 @@
       const confirmPassword = $("newConfirm").value;
 
       const problem = checkPassword(newPassword, confirmPassword);
-      if (problem) { message.textContent = problem; return; }
+      if (problem) { say(problem, true); return; }
 
       try {
         const result = await api("/api/me/password", {
@@ -307,9 +451,9 @@
           })
         });
         $("passwordForm").reset();
-        message.textContent = result.message;
+        say(result.message);
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     });
 
@@ -320,9 +464,9 @@
           body: JSON.stringify({})
         });
         showLoggedOut();
-        message.textContent = result.message;
+        say(result.message);
       } catch (error) {
-        message.textContent = error.message;
+        say(error.message, true);
       }
     });
 
