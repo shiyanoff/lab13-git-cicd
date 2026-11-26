@@ -157,3 +157,19 @@ test("после 5 неудачных попыток вход блокирует
   const blocked = await request("POST", "/api/login", { email: user.email, password: user.password });
   assert.equal(blocked.status, 429);
 });
+
+test("пользователь может изменить свой профиль", async () => {
+  const request = createClient();
+  await request("POST", "/api/login", { email: admin.email, password: admin.password });
+
+  const updated = await request("PUT", "/api/me", {
+    name: "Алия", surname: "Касымова", email: admin.email
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.data.user.surname, "Касымова");
+
+  const taken = await request("PUT", "/api/me", {
+    name: "Алия", surname: "Касымова", email: user.email
+  });
+  assert.equal(taken.status, 409, "чужой email занять нельзя");
+});
