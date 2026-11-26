@@ -84,7 +84,7 @@ test("несовпадающие пароли отклоняются", async () 
 
 test("без входа /api/me возвращает 401", async () => {
   const { status } = await createClient()("GET", "/api/me");
-  assert.equal(status, 200); // НАМЕРЕННАЯ ОШИБКА для проверки CI
+  assert.equal(status, 401);
 });
 
 test("неверный пароль возвращает 401", async () => {
